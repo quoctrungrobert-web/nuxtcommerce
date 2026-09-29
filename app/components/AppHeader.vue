@@ -11,6 +11,15 @@ const cartModal = ref(false);
 const { cart } = useCart();
 const localePath = useLocalePath();
 
+const backendUrl = useRuntimeConfig().public.backendUrl || 'http://localhost:4000';
+const { data: currenciesData } = await useAsyncData('currencies', () =>
+  $fetch(`${backendUrl}/api/currencies`).catch(() => ({ data: [{ code: 'USD', symbol: '$', icon: 'i-circle-flags:us' }] }))
+);
+const currenciesList = computed(() => currenciesData.value?.data || [{ code: 'USD', symbol: '$', icon: 'i-circle-flags:us' }]);
+const currentCurrencyCode = useCookie('currency', { default: () => 'USD' });
+const currentCurrency = computed(() => currenciesList.value.find(c => c.code === currentCurrencyCode.value) || currenciesList.value[0]);
+const isCurrencyMenuOpen = ref(false);
+
 const search = () => {
   router.push({ path: localePath('/'), query: { ...route.query, q: searchQuery.value || undefined } });
   suggestionMenu.value = false;
@@ -18,10 +27,11 @@ const search = () => {
 
 async function fetch() {
   try {
-    const response = await $fetch('/api/search', {
-      query: { search: searchQuery.value },
+    const config = useRuntimeConfig();
+    const response = await $fetch(`${config.public.backendUrl}/api/products`, {
+      query: { q: searchQuery.value },
     });
-    searchResults.value = response.products.nodes;
+    searchResults.value = response.data || [];
   } finally {
     isLoading.value = false;
   }
@@ -41,6 +51,14 @@ watch(
   }
 );
 
+watch(
+  () => route.path,
+  () => {
+    cartModal.value = false;
+    suggestionMenu.value = false;
+  }
+);
+
 const clearSearch = () => {
   suggestionMenu.value = false;
   searchQuery.value = '';
@@ -56,84 +74,97 @@ const totalQuantity = computed(() => cart.value.reduce((s, i) => s + (i.quantity
 </script>
 
 <template>
-  <div class="flex w-full flex-row items-center px-3 lg:px-5 h-[72px] lg:h-20 z-40 fixed bg-white/85 dark:bg-black/85 backdrop-blur-sm dark:backdrop-blur-lg">
+  <div class="flex w-full flex-row items-center px-3 lg:px-5 h-[72px] lg:h-20 z-40 fixed bg-white dark:bg-[#121212]">
     <div class="flex flex-row w-full flex-nowrap items-center gap-2">
-      <NuxtLink
-        aria-label="Home"
-        class="flex items-center justify-center min-w-[52px] min-h-[52px] max-lg:min-w-12 max-lg:min-h-12 hover:bg-black/5 hover:dark:bg-white/15 max-lg:dark:bg-white/15 max-lg:bg-black/5 max-lg:hover:bg-black/10 max-lg:hover:dark:bg-white/20 rounded-2xl max-lg:rounded-full transition active:scale-95"
-        :to="localePath('/')">
-        <img class="rounded-lg max-lg:rounded-full bg-[#b31015] w-8 h-8" src="/logo.svg" alt="Logo" loading="lazy" title="logo" />
-      </NuxtLink>
-      <NuxtLink
-        aria-label="Categories"
-        exactActiveClass="bg-black dark:bg-white text-white dark:text-black"
-        class="font-semibold cursor-pointer px-4 rounded-full hover:bg-black hover:dark:bg-white h-12 items-center justify-center hover:text-white hover:dark:text-black transition active:scale-95 lg:flex hidden"
-        :to="localePath('/categories')">
-        {{ $t('nav.categories') }}
-      </NuxtLink>
-      <NuxtLink
-        aria-label="Favorites"
-        exactActiveClass="bg-black dark:bg-white text-white dark:text-black"
-        class="font-semibold cursor-pointer px-4 rounded-full hover:bg-black hover:dark:bg-white h-12 items-center justify-center hover:text-white hover:dark:text-black transition active:scale-95 lg:flex hidden"
-        :to="localePath('/favorites')">
-        {{ $t('nav.favorites') }}
-      </NuxtLink>
-      <NuxtLink
-        aria-label="Categories"
-        exactActiveClass="!bg-black/10 dark:!bg-white/30"
-        class="lg:hidden flex items-center justify-center min-w-12 min-h-12 rounded-full bg-black/5 dark:bg-white/15 hover:bg-black/10 hover:dark:bg-white/20 transition active:scale-95"
-        :to="localePath('/categories')">
-        <UIcon class="text-[#5f5f5f] dark:text-[#b7b7b7]" name="i-iconamoon-category-fill" size="26" />
-      </NuxtLink>
-      <NuxtLink
-        aria-label="Favorites"
-        exactActiveClass="!bg-black/10 dark:!bg-white/30"
-        class="lg:hidden flex items-center justify-center min-w-12 min-h-12 rounded-full bg-black/5 dark:bg-white/15 hover:bg-black/10 hover:dark:bg-white/20 transition active:scale-95"
-        :to="localePath('/favorites')">
-        <UIcon class="text-[#5f5f5f] dark:text-[#b7b7b7]" name="i-iconamoon-heart-fill" size="26" />
-      </NuxtLink>
-      <div class="flex flex-shrink flex-grow flex-col text-sm font-semibold text-[#111] dark:text-[#eee]">
+
+
+      <div class="flex-1 lg:flex-none flex items-center justify-start">
+        <NuxtLink
+          aria-label="Home"
+          class="flex items-center justify-start hover:opacity-80 transition active:scale-95 lg:pr-4 flex-shrink-0"
+          :to="localePath('/')">
+          <img class="h-10 md:h-12 w-auto dark:invert dark:brightness-200 dark:contrast-150 -mt-1 md:-mt-1.5 max-w-[160px] sm:max-w-[200px] md:max-w-none object-contain" src="https://wanderprints.com/cdn/shop/files/Logo-SVG-01.svg?v=1787801129" alt="WanderPrints Logo" loading="lazy" title="logo" />
+        </NuxtLink>
+      </div>
+
+      <div class="flex-shrink-0 flex-col text-sm font-semibold text-[#111] dark:text-[#eee] transition-all flex w-[160px] sm:w-[200px] lg:flex-grow lg:w-auto mx-1 md:mx-6 mt-1 lg:mt-0">
         <div
-          :class="[
-            'flex h-12 flex-grow rounded-full  pl-4 pr-3 transition-all hover:bg-black/10 hover:dark:bg-white/20',
-            suggestionMenu ? 'bg-black/10 dark:bg-white/20' : 'bg-black/5 dark:bg-white/15',
-          ]">
-          <div @click="suggestionMenu = true" class="flex w-full items-center gap-4">
-            <div v-if="!suggestionMenu" class="flex text-neutral-500 dark:text-neutral-400">
-              <UIcon name="i-iconamoon-search-bold" size="20" />
+          class="flex h-[38px] lg:h-[48px] items-center flex-grow rounded-full pl-3 lg:pl-5 pr-1 lg:pr-2 transition-all border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-[#1a1a1a] focus-within:border-black dark:focus-within:border-white focus-within:shadow-sm">
+          <div @click="suggestionMenu = true" class="flex w-full items-center gap-1 lg:gap-2 h-full">
+            <input
+              id="search-input"
+              class="w-full bg-transparent h-full outline-none placeholder:text-gray-500 placeholder:dark:text-gray-400 font-medium text-[13px] lg:text-[15px]"
+              type="text"
+              v-model="searchQuery"
+              @keyup.enter="search"
+              placeholder="Search..." />
+            
+            <div v-if="searchQuery" @click.stop="clearSearch" class="flex items-center justify-center cursor-pointer transition-all p-0.5 lg:p-1">
+              <UIcon v-if="!isLoading" class="text-gray-400 hover:text-black dark:hover:text-white" name="i-iconamoon-close-light" size="18" />
+              <UIcon v-else name="i-svg-spinners-bars-rotate-fade" size="16" />
             </div>
-            <div class="flex w-full">
-              <input
-                class="w-full bg-transparent py-2 outline-none placeholder:text-[#757575] placeholder:dark:text-neutral-400"
-                type="text"
-                v-model="searchQuery"
-                @keyup.enter="search"
-                :placeholder="route.query.category ? $t('search.placeholder_in_category', { category: route.query.category }) : $t('search.placeholder')" />
-              <div v-if="searchQuery || suggestionMenu" @click.stop="clearSearch" class="flex items-center justify-center cursor-pointer transition-all">
-                <UIcon v-if="!isLoading" class="text-black dark:text-white" name="i-iconamoon-close-circle-1-fill" size="24" />
-                <UIcon v-else name="i-svg-spinners-bars-rotate-fade" size="20" />
-              </div>
-            </div>
+            
+            <button @click="search" class="w-[30px] h-[30px] lg:w-10 lg:h-10 rounded-full bg-[#ea6a32] flex items-center justify-center flex-shrink-0 hover:bg-[#d65d2a] transition-colors text-white">
+              <UIcon name="i-iconamoon-search-light" size="16" class="lg:w-[18px] lg:h-[18px]" />
+            </button>
           </div>
         </div>
       </div>
-      <button
-        @mouseup="cartModal = !cartModal"
-        class="hover:bg-black/5 hover:dark:bg-white/15 max-lg:dark:bg-white/15 max-lg:bg-black/5 max-lg:hover:bg-black/10 max-lg:hover:dark:bg-white/20 min-w-12 min-h-12 flex items-center justify-center rounded-full cursor-pointer relative">
-        <UIcon class="text-[#5f5f5f] dark:text-[#b7b7b7]" name="i-iconamoon-shopping-bag-fill" size="26" />
-        <span v-if="totalQuantity" class="absolute top-1 right-1 flex h-[18px] w-[18px]">
-          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-alizarin-crimson-400 opacity-75"></span>
-          <span class="relative inline-flex rounded-full h-[18px] w-[18px] bg-alizarin-crimson-700 text-[10px] items-center justify-center shadow font-semibold text-white">
-            {{ totalQuantity }}
+      <!-- Currency Dropdown -->
+      <div class="relative lg:flex hidden items-center flex-shrink-0 ml-2">
+        <button @click.stop="isCurrencyMenuOpen = !isCurrencyMenuOpen" class="font-semibold cursor-pointer px-3 rounded-full hover:bg-black/5 hover:dark:bg-white/10 h-[44px] items-center justify-center text-black dark:text-white transition active:scale-95 flex gap-2 whitespace-nowrap">
+          <UIcon :name="currentCurrency.icon" size="20" />
+          {{ currentCurrency.symbol }} {{ currentCurrency.code }}
+          <UIcon name="i-iconamoon-arrow-down-2-light" size="16" class="text-gray-500" />
+        </button>
+        <div v-if="isCurrencyMenuOpen" class="absolute top-[calc(100%+8px)] right-0 w-[180px] bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-50 overflow-hidden py-2">
+          <div v-for="currency in currenciesList" :key="currency.code"
+            @click="currentCurrencyCode = currency.code; isCurrencyMenuOpen = false"
+            class="flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-black/5 hover:dark:bg-white/10 transition-colors">
+            <UIcon :name="currency.icon" size="20" />
+            <span class="font-medium text-[15px] text-black dark:text-white">{{ currency.symbol }} {{ currency.code }}</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+        <NuxtLink
+          aria-label="Track Order"
+          class="font-semibold cursor-pointer px-3 rounded-full hover:bg-black/5 hover:dark:bg-white/10 h-[44px] items-center justify-center text-black dark:text-white transition active:scale-95 lg:flex hidden gap-2 whitespace-nowrap"
+          :to="localePath('/track-order')">
+          <UIcon name="i-iconamoon-delivery-fast-light" size="24" />
+          Track Order
+        </NuxtLink>
+        <NuxtLink
+          aria-label="Account"
+          class="cursor-pointer w-[36px] sm:w-[44px] h-[36px] sm:h-[44px] flex items-center justify-center rounded-full hover:bg-black/5 hover:dark:bg-white/10 text-black dark:text-white transition active:scale-95 flex"
+          :to="localePath('/account')">
+          <UIcon name="i-iconamoon-profile-light" size="24" class="sm:w-[26px] sm:h-[26px]" />
+        </NuxtLink>
+        <NuxtLink
+          aria-label="Favorites"
+          class="cursor-pointer w-[44px] h-[44px] flex items-center justify-center rounded-full hover:bg-black/5 hover:dark:bg-white/10 text-black dark:text-white transition active:scale-95 hidden sm:flex"
+          :to="localePath('/favorites')">
+          <UIcon name="i-iconamoon-heart-light" size="26" />
+        </NuxtLink>
+        <button
+          @mouseup="cartModal = !cartModal"
+          class="cursor-pointer w-[36px] sm:w-[44px] h-[36px] sm:h-[44px] flex items-center justify-center rounded-full hover:bg-black/5 hover:dark:bg-white/10 text-black dark:text-white transition active:scale-95 relative">
+          <UIcon name="i-iconamoon-shopping-bag-light" size="24" class="sm:w-[26px] sm:h-[26px]" />
+          <span v-if="totalQuantity" class="absolute top-1 right-1 sm:top-1.5 sm:right-1.5 flex h-[16px] w-[16px] sm:h-[18px] sm:w-[18px]">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-alizarin-crimson-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-[16px] w-[16px] sm:h-[18px] sm:w-[18px] bg-alizarin-crimson-700 text-[9px] sm:text-[10px] items-center justify-center shadow font-semibold text-white">
+              {{ totalQuantity }}
+            </span>
           </span>
-        </span>
-      </button>
+        </button>
+      </div>
     </div>
   </div>
   <div
     v-if="suggestionMenu"
     ref="onClickOutsideRef"
-    class="fixed top-[72px] lg:top-20 left-0 right-0 z-50 bg-white/85 dark:bg-black/85 backdrop-blur-sm dark:backdrop-blur-lg lg:rounded-b-3xl w-full">
+    class="fixed top-[72px] lg:top-20 left-0 right-0 z-50 bg-white/95 dark:bg-[#121212]/95 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 shadow-lg w-full">
     <div class="max-h-[calc(100vh-72px)] lg:max-h-[calc(100vh-80px)] overflow-auto">
       <!-- Loading State -->
       <div v-if="isLoading" class="flex items-center justify-center h-80">
@@ -160,7 +191,7 @@ const totalQuantity = computed(() => cart.value.reduce((s, i) => s + (i.quantity
         <div class="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 lg:gap-5 mt-3 lg:mt-5">
           <NuxtLink
             @click="suggestionMenu = false"
-            :to="localePath(`/product/${product.slug}-${product.sku.split('-')[0]}`)"
+            :to="localePath(`/product/${product.slug}`)"
             v-for="(product, i) in searchResults"
             :key="i"
             class="group select-none">
@@ -170,21 +201,18 @@ const totalQuantity = computed(() => cart.value.reduce((s, i) => s + (i.quantity
                   :alt="product.name"
                   loading="lazy"
                   :title="product.name"
-                  :src="product.galleryImages.nodes[0].sourceUrl"
+                  :src="product.mainImage || '/placeholder.png'"
                   class="absolute h-full w-full dark:bg-neutral-800 bg-neutral-200 object-cover" />
                 <NuxtImg
                   :alt="product.name"
                   loading="lazy"
                   :title="product.name"
-                  :src="product.image.sourceUrl"
+                  :src="product.mainImage || '/placeholder.png'"
                   class="absolute h-full w-full dark:bg-neutral-800 bg-neutral-200 object-cover transition-opacity duration-300 group-hover:opacity-0" />
               </div>
               <div class="grid gap-0.5 pt-3 pb-4 px-1.5 text-sm font-semibold">
-                <ProductPrice :sale-price="product.salePrice" :regular-price="product.regularPrice" variant="card" />
+                <span class="text-green-700 dark:text-[#a1e6b3] font-bold">${{ product.price }}</span>
                 <div>{{ product.name }}</div>
-                <div class="font-normal text-[#5f5f5f] dark:text-[#a3a3a3]">
-                  {{ product.allPaStyle.nodes[0].name }}
-                </div>
               </div>
             </div>
           </NuxtLink>
@@ -202,13 +230,8 @@ const totalQuantity = computed(() => cart.value.reduce((s, i) => s + (i.quantity
   <div v-if="suggestionMenu || cartModal" :class="['fixed inset-0 ', cartModal ? 'z-40' : 'z-30']">
     <div class="w-full h-full bg-black/30 backdrop-blur-lg"></div>
   </div>
-  <button
-    v-if="cartModal"
-    class="hover:bg-white/65 dark:hover:bg-white/10 transition shadow-2xl mt-3 lg:mt-4 mx-3 lg:mx-5 items-center justify-center min-w-12 min-h-12 rounded-[2rem] right-0 fixed flex z-50 bg-white/85 dark:bg-black/30 dark:border dark:border-white/10 cart-button-bezel backdrop-blur-lg">
-    <UIcon class="text-[#5f5f5f] dark:text-[#b7b7b7]" name="i-iconamoon-close" size="26" />
-  </button>
-  <Transition name="dropdown">
-    <Cart v-if="cartModal" ref="onClickOutsideRef" />
+  <Transition name="slide-in-right">
+    <Cart v-if="cartModal" ref="onClickOutsideRef" @close="cartModal = false" />
   </Transition>
 </template>
 

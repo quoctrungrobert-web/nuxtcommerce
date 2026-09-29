@@ -25,7 +25,8 @@ useSeoMeta({
 
 <template>
   <AppHeader />
-  <main class="pt-[72px] lg:pt-20 min-h-[calc(100vh-72px)]">
+  <CollectionsNav />
+  <main class="pt-[120px] lg:pt-[128px] min-h-[calc(100vh-72px)]">
     <NuxtPage />
   </main>
   <AppFooter />

@@ -1,11 +1,20 @@
 <!--app/components/ButtonSelectCategory.vue-->
 <script setup>
-const categoriesData = ref([]);
-
-onMounted(async () => {
-  const response = await $fetch('/api/categories');
-  categoriesData.value = response.productCategories.nodes.filter(category => category.products.nodes.length && category.children.nodes.length);
-});
+const categoriesData = ref([
+  { id: 1, name: 'T-shirts', image: { sourceUrl: 'https://picsum.photos/40/40?random=1' } },
+  { id: 2, name: 'Blouses & Shirts', image: { sourceUrl: 'https://picsum.photos/40/40?random=2' } },
+  { id: 3, name: 'Pants', image: { sourceUrl: 'https://picsum.photos/40/40?random=3' } },
+  { id: 4, name: 'Sweatshirts & Hoodies', image: { sourceUrl: 'https://picsum.photos/40/40?random=4' } },
+  { id: 5, name: 'Jeans', image: { sourceUrl: 'https://picsum.photos/40/40?random=5' } },
+  { id: 6, name: 'Dresses', image: { sourceUrl: 'https://picsum.photos/40/40?random=6' } },
+  { id: 7, name: 'Vests', image: { sourceUrl: 'https://picsum.photos/40/40?random=7' } },
+  { id: 8, name: 'Shorts', image: { sourceUrl: 'https://picsum.photos/40/40?random=8' } },
+  { id: 9, name: 'Tops', image: { sourceUrl: 'https://picsum.photos/40/40?random=9' } },
+  { id: 10, name: 'Jackets', image: { sourceUrl: 'https://picsum.photos/40/40?random=10' } },
+  { id: 11, name: 'Jumpsuits', image: { sourceUrl: 'https://picsum.photos/40/40?random=11' } },
+  { id: 12, name: 'Swimwear', image: { sourceUrl: 'https://picsum.photos/40/40?random=12' } },
+  { id: 13, name: 'Skirts', image: { sourceUrl: 'https://picsum.photos/40/40?random=13' } }
+]);
 
 const categories = computed(() => categoriesData.value);
 </script>

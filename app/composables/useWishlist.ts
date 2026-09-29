@@ -5,7 +5,7 @@ export const useWishlist = (product?: WishlistItem | null) => {
 
   const isWishlisted = computed(() => {
     if (!product) return false;
-    return wishlist.value.some(item => item.databaseId === product.databaseId);
+    return wishlist.value.some(item => item.id === product.id);
   });
 
   const persistWishlist = () => {
@@ -14,17 +14,17 @@ export const useWishlist = (product?: WishlistItem | null) => {
   };
 
   const toggleWishlist = (item: WishlistItem) => {
-    const exists = wishlist.value.some(existing => existing.databaseId === item.databaseId);
+    const exists = wishlist.value.some(existing => existing.id === item.id);
 
     wishlist.value = exists
-      ? wishlist.value.filter(existing => existing.databaseId !== item.databaseId)
+      ? wishlist.value.filter(existing => existing.id !== item.id)
       : [...wishlist.value, item];
 
     persistWishlist();
   };
 
-  const removeFromList = (databaseId: number) => {
-    wishlist.value = wishlist.value.filter(item => item.databaseId !== databaseId);
+  const removeFromList = (id: number) => {
+    wishlist.value = wishlist.value.filter(item => item.id !== id);
     persistWishlist();
   };
 

@@ -59,6 +59,22 @@ const productSchema = computed(() => {
     image: images,
     sku: props.info.sku || undefined,
     brand: { '@type': 'Brand', name: siteName },
+    aggregateRating: props.info.ratingValue ? {
+      '@type': 'AggregateRating',
+      ratingValue: Number(props.info.ratingValue).toFixed(1),
+      reviewCount: props.info.reviewCount || 1
+    } : undefined,
+    offers: {
+      '@type': 'Offer',
+      priceCurrency: 'USD',
+      price: props.info.priceNumber || 0,
+      itemCondition: 'https://schema.org/NewCondition',
+      availability: 'https://schema.org/InStock',
+      seller: {
+        '@type': 'Organization',
+        name: siteName
+      }
+    }
   };
 });
 

@@ -4,7 +4,7 @@ import pkg from "./package.json";
 export default defineNuxtConfig({
   devtools: { enabled: false },
 
-  modules: ["@vueuse/nuxt", "@nuxt/ui", "@nuxt/image", "notivue/nuxt", "@nuxtjs/i18n", "@nuxthub/core"],
+  modules: ["@vueuse/nuxt", "@nuxt/ui", "@nuxt/image", "notivue/nuxt", "@nuxtjs/i18n", "@nuxtjs/sitemap", "@nuxtjs/robots"],
 
   i18n: {
     defaultLocale: "en",
@@ -24,6 +24,13 @@ export default defineNuxtConfig({
     ],
   },
 
+  image: {
+    format: ['webp'],
+    quality: 80,
+    provider: 'ipx', 
+    // In production, you can switch this to 'cloudflare' or 'vercel' if deployed there
+  },
+
   notivue: {
     position: "top-center",
     limit: 3,
@@ -33,28 +40,26 @@ export default defineNuxtConfig({
   css: ["notivue/notification.css", "notivue/animations.css"],
 
   runtimeConfig: {
-    gqlHost: process.env.GQL_HOST || "",
     public: {
       version: pkg.version,
+      backendUrl: process.env.BACKEND_URL || "http://localhost:4000",
     },
   },
 
   routeRules: {
-    "/": { prerender: true },
-    "/categories": { swr: 3600 },
-    "/favorites": { swr: 600 },
+    "/": { ssr: false },
+    "/categories": { ssr: false },
+    "/favorites": { ssr: false },
   },
+
 
   nitro: {
-    preset: "cloudflare_pages",
-    prerender: { routes: ["/sitemap.xml", "/robots.txt"] },
+    preset: "node-server",
   },
 
-  hub: {
-    cache: {
-      driver: "cloudflare-kv-binding",
-      binding: "CACHE",
-    },
+  site: {
+    url: "https://caros.services",
+    name: "Caros Services",
   },
 
   compatibilityDate: "2025-01-01",

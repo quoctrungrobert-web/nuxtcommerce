@@ -31,21 +31,20 @@ useSeoMeta({
       tag="div"
       mode="in-out"
       v-for="product in wishlist"
-      :key="product.databaseId"
+      :key="product.id"
       class="w-full sm:max-w-[300px] p-3 lg:p-2 relative select-none">
       <div class="relative overflow-hidden pb-[125%] rounded-[32px]">
-        <NuxtImg :alt="product.name" class="absolute w-full h-full object-cover bg-neutral-200 dark:bg-neutral-800" :src="product.image.sourceUrl" loading="lazy" />
+        <NuxtImg :alt="product.name" class="absolute w-full h-full object-cover bg-neutral-200 dark:bg-neutral-800" :src="product.mainImage || '/placeholder.png'" loading="lazy" />
         <NuxtLink
           class="absolute inset-0 bg-gradient-to-t from-black/50 hover:from-black/60 flex items-end p-5"
-          :to="localePath(`/product/${product.slug}-${product.sku.split('-')[0]}`)">
+          :to="localePath(`/product/${product.slug}`)">
           <div class="grid gap-0.5 text-white">
-            <ProductPrice :sale-price="product.salePrice" :regular-price="product.regularPrice" variant="card" />
+            <span class="font-bold text-green-300">${{ product.price }}</span>
             <div class="font-bold">{{ product.name }}</div>
-            <div class="text-sm font-medium">{{ product.allPaStyle.nodes[0].name }}</div>
           </div>
         </NuxtLink>
       </div>
-      <button class="absolute top-5 right-5 group" title="Remove Product" @click="removeFromList(product.databaseId)">
+      <button class="absolute top-5 right-5 group" title="Remove Product" @click="removeFromList(product.id)">
         <div class="w-12 h-12 rounded-full flex justify-center items-center bg-alizarin-crimson-950/90 shadow-md">
           <UIcon name="i-iconamoon-heart-fill" size="26" class="text-alizarin-crimson-500 group-hover:text-white transition pulse-heart" />
         </div>
