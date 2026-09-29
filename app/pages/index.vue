@@ -82,7 +82,11 @@ async function fetchProducts() {
     if (category) params.set('category', category);
     if (q) params.set('q', q);
     
-    const response = await $fetch(`${BACKEND}/api/products?${params.toString()}`);
+    const response = await $fetch(`${BACKEND}/api/products?${params.toString()}`, {
+      headers: {
+        'Bypass-Tunnel-Reminder': 'true'
+      }
+    });
     let list = Array.isArray(response) ? response : (response?.data || []);
     
     productsData.value = list.map(normalizeProduct);

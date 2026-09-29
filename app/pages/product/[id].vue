@@ -53,12 +53,16 @@ function normalizeProduct(p, related = []) {
 
 onMounted(async () => {
   try {
-    const p = await $fetch(`${BACKEND}/api/products/${slug.value}`);
+    const p = await $fetch(`${BACKEND}/api/products/${slug.value}`, {
+      headers: { 'Bypass-Tunnel-Reminder': 'true' }
+    });
     let related = [];
     try {
       const categorySlug = p.category?.slug;
       const params = categorySlug ? `?category=${categorySlug}&limit=8` : `?limit=8`;
-      const relatedRes = await $fetch(`${BACKEND}/api/products${params}`);
+      const relatedRes = await $fetch(`${BACKEND}/api/products${params}`, {
+        headers: { 'Bypass-Tunnel-Reminder': 'true' }
+      });
       const relatedList = Array.isArray(relatedRes) ? relatedRes : (relatedRes?.data || []);
       related = relatedList
         .filter(item => item.id !== p.id)
@@ -79,10 +83,14 @@ onMounted(async () => {
     
     // Fetch reviews and campaigns using the real product ID
     try {
-      const r = await $fetch(`${BACKEND}/api/products/${p.id}/reviews`);
+      const r = await $fetch(`${BACKEND}/api/products/${p.id}/reviews`, {
+        headers: { 'Bypass-Tunnel-Reminder': 'true' }
+      });
       reviews.value = Array.isArray(r) ? r : [];
       
-      const c = await $fetch(`${BACKEND}/api/campaigns/active`);
+      const c = await $fetch(`${BACKEND}/api/campaigns/active`, {
+        headers: { 'Bypass-Tunnel-Reminder': 'true' }
+      });
       campaigns.value = Array.isArray(c) ? c : [];
     } catch(e) {
       console.error('Failed to fetch reviews or campaigns:', e);
