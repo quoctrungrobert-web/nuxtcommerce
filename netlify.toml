@@ -9,6 +9,6 @@
 
 [[redirects]]
   from = "/api/*"
-  to = "https://cuddly-wombat-90.loca.lt/api/:splat"
+  to = "https://mypodbackend2026.loca.lt/api/:splat"
   status = 200
   force = true
