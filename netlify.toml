@@ -4,4 +4,11 @@
 
 [build.environment]
   NODE_VERSION = "20"
-  NUXT_PUBLIC_BACKEND_URL = "https://cuddly-wombat-90.loca.lt"
+  BACKEND_URL = ""
+  NUXT_PUBLIC_BACKEND_URL = ""
+
+[[redirects]]
+  from = "/api/*"
+  to = "https://cuddly-wombat-90.loca.lt/api/:splat"
+  status = 200
+  force = true
