@@ -4,4 +4,4 @@
 
 [build.environment]
   NODE_VERSION = "20"
-  NUXT_PUBLIC_BACKEND_URL = "https://mypodbackend2026.loca.lt"
+  NUXT_PUBLIC_BACKEND_URL = "https://cuddly-wombat-90.loca.lt"
